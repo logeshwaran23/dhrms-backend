@@ -6,6 +6,10 @@ export interface TokenPayload {
   userId: string;
   role?: string;
   email?: string;
+  employeeId?: string;
+  permissions?: string[];
+  roleName?: string;
+  employee?: any;
 }
 
 export const signAccessToken = (payload: TokenPayload) => {

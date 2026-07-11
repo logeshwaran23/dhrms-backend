@@ -7,9 +7,9 @@ import { CreateEmployeeInput, UpdateEmployeeInput, UpdateProfileInput } from './
 export class EmployeeService {
   async list(req: Request) {
     const { page, limit, skip } = getPaginationParams(req);
-    const search = req.query.search as string | undefined;
-    const department = req.query.department as string | undefined;
-    const status = req.query.status as string | undefined;
+    const search = req.query.search as any as string | undefined;
+    const department = req.query.department as any as string | undefined;
+    const status = req.query.status as any as string | undefined;
 
     const where: any = {};
     if (search) {

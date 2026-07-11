@@ -32,8 +32,8 @@ export class AttendanceController {
   async getMyAttendance(req: Request, res: Response, next: NextFunction) {
     try {
       if (!req.user?.employeeId) return res.json({ success: true, data: [] });
-      const month = req.query.month ? parseInt(req.query.month as string) : undefined;
-      const year = req.query.year ? parseInt(req.query.year as string) : undefined;
+      const month = req.query.month ? parseInt(req.query.month as any as string) : undefined;
+      const year = req.query.year ? parseInt(req.query.year as any as string) : undefined;
       const data = await attendanceService.getMyAttendance(req.user.employeeId, month, year);
       res.json({ success: true, data });
     } catch (error) { next(error); }
@@ -42,14 +42,14 @@ export class AttendanceController {
   async getTeamAttendance(req: Request, res: Response, next: NextFunction) {
     try {
       if (!req.user?.employeeId) return res.json({ success: true, data: [] });
-      const data = await attendanceService.getTeamAttendance(req.user.employeeId, req.query.date as string);
+      const data = await attendanceService.getTeamAttendance(req.user.employeeId, req.query.date as any as string);
       res.json({ success: true, data });
     } catch (error) { next(error); }
   }
 
   async getAllAttendance(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await attendanceService.getAllAttendance(req.query.date as string);
+      const data = await attendanceService.getAllAttendance(req.query.date as any as string);
       res.json({ success: true, data });
     } catch (error) { next(error); }
   }

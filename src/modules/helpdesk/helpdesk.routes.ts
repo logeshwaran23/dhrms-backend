@@ -22,7 +22,7 @@ const resolveTicketSchema = z.object({
 router.post('/', authenticate, validate(createTicketSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const ticket = await prisma.ticket.create({
-      data: { employeeId: req.user!.employeeId, ...req.body },
+      data: { employeeId: req.user!.employeeId!, ...req.body },
     });
     await createAuditLog({ userId: req.user!.userId, action: 'CREATE', resource: 'ticket', resourceId: ticket.id, ip: req.ip });
     res.status(201).json({ success: true, data: ticket, message: 'Ticket created successfully' });

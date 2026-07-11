@@ -39,7 +39,7 @@ export class LeaveController {
   async getBalance(req: Request, res: Response, next: NextFunction) {
     try {
       const employeeId = req.params.employeeId || req.user!.employeeId;
-      const year = req.query.year ? parseInt(req.query.year as string) : undefined;
+      const year = req.query.year ? parseInt(req.query.year as any as string) : undefined;
       const balances = await leaveService.getBalance(employeeId, year);
       res.json({ success: true, data: balances });
     } catch (error) { next(error); }
@@ -55,14 +55,14 @@ export class LeaveController {
 
   async getRequests(req: Request, res: Response, next: NextFunction) {
     try {
-      const requests = await leaveService.getRequests(req.user!.employeeId);
+      const requests = await leaveService.getRequests(req.user!.employeeId!);
       res.json({ success: true, data: requests });
     } catch (error) { next(error); }
   }
 
   async getTeamRequests(req: Request, res: Response, next: NextFunction) {
     try {
-      const status = req.query.status as string | undefined;
+      const status = req.query.status as any as string | undefined;
       const requests = await leaveService.getTeamRequests(req.user!.employeeId, status);
       res.json({ success: true, data: requests });
     } catch (error) { next(error); }
@@ -70,7 +70,7 @@ export class LeaveController {
 
   async getAllRequests(req: Request, res: Response, next: NextFunction) {
     try {
-      const status = req.query.status as string | undefined;
+      const status = req.query.status as any as string | undefined;
       const requests = await leaveService.getAllRequests(status);
       res.json({ success: true, data: requests });
     } catch (error) { next(error); }

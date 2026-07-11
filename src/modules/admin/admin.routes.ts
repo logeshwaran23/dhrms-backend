@@ -74,8 +74,8 @@ router.get('/permissions', authenticate, authorize('admin:manage_roles'), async 
 router.get('/audit-logs', authenticate, authorize('audit:view'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { page, limit, skip } = getPaginationParams(req);
-    const resource = req.query.resource as string | undefined;
-    const action = req.query.action as string | undefined;
+    const resource = req.query.resource as any as string | undefined;
+    const action = req.query.action as any as string | undefined;
 
     const where: any = {};
     if (resource) where.resource = resource;
@@ -123,7 +123,7 @@ router.post('/departments', authenticate, authorize('admin:settings'), async (re
 // ─── Designations ──────────────────────────────────────────────
 router.get('/designations', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const departmentId = req.query.departmentId as string | undefined;
+    const departmentId = req.query.departmentId as any as string | undefined;
     const where = departmentId ? { departmentId } : {};
     const designations = await prisma.designation.findMany({
       where,
@@ -160,7 +160,7 @@ router.patch('/settings', authenticate, authorize('admin:settings'), async (req:
 // ─── Holidays ──────────────────────────────────────────────────
 router.get('/holidays', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const year = req.query.year ? parseInt(req.query.year as string) : new Date().getFullYear();
+    const year = req.query.year ? parseInt(req.query.year as any as string) : new Date().getFullYear();
     const holidays = await prisma.holiday.findMany({
       where: { year },
       orderBy: { date: 'asc' },
@@ -185,7 +185,7 @@ router.post('/holidays', authenticate, authorize('admin:settings'), async (req: 
 router.get('/users', authenticate, authorize('admin:manage_roles'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { page, limit, skip } = getPaginationParams(req);
-    const search = req.query.search as string | undefined;
+    const search = req.query.search as any as string | undefined;
 
     const where: any = {};
     if (search) {

@@ -15,7 +15,7 @@ export class EmployeeController {
 
   async getTeam(req: Request, res: Response, next: NextFunction) {
     try {
-      const team = await employeeService.getTeam(req.user!.employeeId);
+      const team = await employeeService.getTeam(req.user!.employeeId!);
       res.json({ success: true, data: team });
     } catch (error) {
       next(error);

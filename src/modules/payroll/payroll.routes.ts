@@ -114,7 +114,7 @@ router.post('/requests', authenticate, async (req: Request, res: Response, next:
     const { month, year, purpose } = req.body;
     const request = await prisma.payslipRequest.create({
       data: {
-        employeeId: req.user!.employeeId,
+        employeeId: req.user!.employeeId!,
         month: Number(month),
         year: Number(year),
         purpose,

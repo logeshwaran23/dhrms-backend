@@ -1,0 +1,21 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const leave_controller_1 = require("./leave.controller");
+const middleware_1 = require("../../middleware");
+const leave_validation_1 = require("./leave.validation");
+const router = (0, express_1.Router)();
+router.get('/types', middleware_1.authenticate, leave_controller_1.leaveController.getLeaveTypes);
+router.post('/types', middleware_1.authenticate, (0, middleware_1.authorize)('admin:settings'), leave_controller_1.leaveController.createLeaveType);
+router.patch('/types/:id', middleware_1.authenticate, (0, middleware_1.authorize)('admin:settings'), leave_controller_1.leaveController.updateLeaveType);
+router.delete('/types/:id', middleware_1.authenticate, (0, middleware_1.authorize)('admin:settings'), leave_controller_1.leaveController.deleteLeaveType);
+router.get('/balance', middleware_1.authenticate, leave_controller_1.leaveController.getBalance);
+router.get('/balance/:employeeId', middleware_1.authenticate, (0, middleware_1.authorize)('leave:view:all'), leave_controller_1.leaveController.getBalance);
+router.post('/apply', middleware_1.authenticate, (0, middleware_1.authorize)('leave:apply'), (0, middleware_1.validate)(leave_validation_1.applyLeaveSchema), leave_controller_1.leaveController.apply);
+router.get('/requests', middleware_1.authenticate, leave_controller_1.leaveController.getRequests);
+router.get('/requests/team', middleware_1.authenticate, (0, middleware_1.authorize)('leave:approve:team', 'leave:approve:all'), leave_controller_1.leaveController.getTeamRequests);
+router.get('/requests/all', middleware_1.authenticate, (0, middleware_1.authorize)('leave:view:all'), leave_controller_1.leaveController.getAllRequests);
+router.patch('/requests/:id/approve', middleware_1.authenticate, (0, middleware_1.authorize)('leave:approve:team', 'leave:approve:all'), (0, middleware_1.validate)(leave_validation_1.leaveActionSchema), leave_controller_1.leaveController.approve);
+router.patch('/requests/:id/reject', middleware_1.authenticate, (0, middleware_1.authorize)('leave:approve:team', 'leave:approve:all'), (0, middleware_1.validate)(leave_validation_1.leaveActionSchema), leave_controller_1.leaveController.reject);
+exports.default = router;
+//# sourceMappingURL=leave.routes.js.map

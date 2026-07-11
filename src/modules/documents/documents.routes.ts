@@ -45,7 +45,7 @@ router.post('/upload', authenticate, upload.single('file'), async (req: Request,
 
     const doc = await prisma.document.create({
       data: {
-        employeeId: req.user!.employeeId,
+        employeeId: req.user!.employeeId!,
         name: req.body.name || req.file.originalname,
         type: req.body.type || 'OTHER',
         filePath: req.file.path,
