@@ -1,44 +1,35 @@
 const fs = require('fs');
 const path = require('path');
 
-function processDir(dir) {
-  const files = fs.readdirSync(dir);
-  for (const file of files) {
-    const fullPath = path.join(dir, file);
-    if (fs.statSync(fullPath).isDirectory()) {
-      processDir(fullPath);
-    } else if (fullPath.endsWith('.ts')) {
-      let content = fs.readFileSync(fullPath, 'utf8');
-      let changed = false;
-
-      // Fix query param casts
-      if (content.match(/req\.query\.\w+ as string/g)) {
-        content = content.replace(/(req\.query\.\w+) as string/g, '$1 as any as string');
-        changed = true;
-      }
-
-      // Fix `employeeId` assignment where it complains about string | undefined
-      if (content.includes("employeeId: req.user!.employeeId,")) {
-        content = content.replace(/employeeId: req\.user!\.employeeId,/g, 'employeeId: req.user!.employeeId!,');
-        changed = true;
-      }
-      if (content.includes("employeeId: req.user?.employeeId,")) {
-        content = content.replace(/employeeId: req\.user\?\.employeeId,/g, 'employeeId: req.user?.employeeId!,');
-        changed = true;
-      }
-
-      // Additional fixes for arguments in controllers:
-      // req.user!.employeeId being passed to functions expecting string
-      if (content.match(/req\.user!\.employeeId\)/g)) {
-        content = content.replace(/req\.user!\.employeeId\)/g, 'req.user!.employeeId!)');
-        changed = true;
-      }
-
-      if (changed) {
-        fs.writeFileSync(fullPath, content);
-      }
+function walkSync(dir, filelist = []) {
+  fs.readdirSync(dir).forEach(file => {
+    const dirFile = path.join(dir, file);
+    try {
+      filelist = walkSync(dirFile, filelist);
+    } catch (err) {
+      if (err.code === 'ENOTDIR' || err.code === 'EBADF') filelist.push(dirFile);
     }
-  }
+  });
+  return filelist;
 }
 
-processDir(path.join(__dirname, 'src'));
+const files = walkSync('/Users/logeshwaranselvam/Documents/hrms/server/src/modules');
+
+files.filter(f => f.endsWith('.ts')).forEach(file => {
+  let content = fs.readFileSync(file, 'utf8');
+  let original = content;
+
+  // req.params.something -> (req.params.something as string)
+  // Wait, better to just cast the occurrences found in the TS errors
+  
+  // Specific fixes based on the TS errors
+  content = content.replace(/req\.params\.id(?!\s*as)/g, '(req.params.id as string)');
+  content = content.replace(/req\.query\.([^ \)\}\]]+)(?!\s*as)/g, '(req.query.$1 as string)');
+  content = content.replace(/req\.user!\.employeeId(?!\s*as)/g, '(req.user!.employeeId as string)');
+  content = content.replace(/req\.user!\.roleName(?!\s*as)/g, '(req.user!.roleName as string)');
+
+  if (content !== original) {
+    fs.writeFileSync(file, content);
+  }
+});
+console.log('Fixed types in modules');

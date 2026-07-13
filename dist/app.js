@@ -23,12 +23,29 @@ const admin_routes_1 = __importDefault(require("./modules/admin/admin.routes"));
 const performance_routes_1 = __importDefault(require("./modules/performance/performance.routes"));
 const recruitment_routes_1 = __importDefault(require("./modules/recruitment/recruitment.routes"));
 const app = (0, express_1.default)();
+// ─── Trust Proxy (Render/Vercel) ─────────────────────────────
+// Required for rate-limiting to use real client IPs, not proxy IP
+app.set('trust proxy', 1);
 // ─── Security ────────────────────────────────────────────────
 app.use((0, helmet_1.default)());
 app.use((0, cors_1.default)({
-    origin: config_1.env.CLIENT_URL,
+    origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, curl, etc.)
+        if (!origin)
+            return callback(null, true);
+        const allowedOrigins = [
+            config_1.env.CLIENT_URL,
+            'https://dhrms-w47g.vercel.app',
+            'http://localhost:5173',
+            'http://localhost:3000',
+        ].filter(Boolean);
+        if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
+            return callback(null, true);
+        }
+        callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 // ─── Parsing ─────────────────────────────────────────────────
@@ -40,7 +57,7 @@ app.use('/api', middleware_1.apiLimiter);
 app.use('/uploads', express_1.default.static(path_1.default.resolve(config_1.env.UPLOAD_DIR || './uploads')));
 // ─── Health Check ────────────────────────────────────────────
 app.get('/api/health', (_req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.json({ status: 'ok', version: 'v2-ist-fix', timestamp: new Date().toISOString() });
 });
 // ─── API Routes ──────────────────────────────────────────────
 app.use('/api/auth', auth_routes_1.default);

@@ -11,8 +11,10 @@ const server = app_1.default.listen(config_1.env.PORT, () => {
     console.log(`🔗 Client URL: ${config_1.env.CLIENT_URL}\n`);
 });
 // Graceful shutdown
-const shutdown = (signal) => {
+const shutdown = async (signal) => {
     console.log(`\n${signal} received. Shutting down gracefully...`);
+    // Disconnect Prisma to release DB connections
+    await config_1.prisma.$disconnect().catch(console.error);
     server.close(() => {
         console.log('Server closed.');
         process.exit(0);

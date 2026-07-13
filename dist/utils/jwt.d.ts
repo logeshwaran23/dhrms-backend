@@ -1,6 +1,7 @@
 export interface TokenPayload {
     userId: string;
     role?: string;
+    roleId?: string;
     email?: string;
     employeeId?: string;
     permissions?: string[];

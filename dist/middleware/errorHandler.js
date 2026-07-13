@@ -14,7 +14,11 @@ class AppError extends Error {
 }
 exports.AppError = AppError;
 function errorHandler(err, _req, res, _next) {
-    console.error('Error:', err);
+    // Log with timestamp for Render logs
+    console.error(`[${new Date().toISOString()}] Error:`, err.message || err);
+    if (process.env.NODE_ENV === 'development') {
+        console.error(err.stack);
+    }
     if (err instanceof AppError) {
         res.status(err.statusCode).json({
             success: false,
@@ -43,6 +47,36 @@ function errorHandler(err, _req, res, _next) {
             });
             return;
         }
+    }
+    // Prisma connection / pool exhaustion errors
+    if (err.constructor.name === 'PrismaClientInitializationError' ||
+        err.constructor.name === 'PrismaClientRustPanicError' ||
+        err.code === 'P1001' || err.code === 'P1002' || err.code === 'P1017') {
+        console.error('[DB CONNECTION ERROR]', err.message);
+        res.status(503).json({
+            success: false,
+            message: 'Database temporarily unavailable. Please try again in a moment.',
+            code: 'DB_UNAVAILABLE',
+        });
+        return;
+    }
+    // Prisma validation error
+    if (err.constructor.name === 'PrismaClientValidationError') {
+        res.status(400).json({
+            success: false,
+            message: 'Invalid request data',
+            code: 'VALIDATION_ERROR',
+        });
+        return;
+    }
+    // CORS errors
+    if (err.message === 'Not allowed by CORS') {
+        res.status(403).json({
+            success: false,
+            message: 'Cross-origin request blocked',
+            code: 'CORS_ERROR',
+        });
+        return;
     }
     // Fallback
     res.status(500).json({

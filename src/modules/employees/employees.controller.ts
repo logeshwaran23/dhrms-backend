@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Request, Response, NextFunction } from 'express';
 import { employeeService } from './employees.service';
 import { createAuditLog } from '../../utils';

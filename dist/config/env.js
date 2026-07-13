@@ -7,14 +7,16 @@ exports.env = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 const zod_1 = require("zod");
 dotenv_1.default.config();
+// Enforce Indian Standard Time (IST) globally for the Node process
+process.env.TZ = 'Asia/Kolkata';
 const envSchema = zod_1.z.object({
-    DATABASE_URL: zod_1.z.string().url(),
+    DATABASE_URL: zod_1.z.string().min(1),
     JWT_SECRET: zod_1.z.string().min(16),
     JWT_REFRESH_SECRET: zod_1.z.string().min(16),
     JWT_ACCESS_EXPIRY: zod_1.z.string().default('15m'),
     JWT_REFRESH_EXPIRY: zod_1.z.string().default('7d'),
     PORT: zod_1.z.coerce.number().default(4000),
-    CLIENT_URL: zod_1.z.string().url().default('http://localhost:5173'),
+    CLIENT_URL: zod_1.z.string().default('https://dhrms-w47g.vercel.app'),
     NODE_ENV: zod_1.z.enum(['development', 'production', 'test']).default('development'),
     UPLOAD_DIR: zod_1.z.string().default('./uploads'),
 });
