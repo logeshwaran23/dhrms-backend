@@ -32,11 +32,18 @@ app.use(cors({
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
     
+    // In development, allow all origins for easier testing
+    if (env.NODE_ENV === 'development') {
+      return callback(null, true);
+    }
+
     const allowedOrigins = [
       env.CLIENT_URL,
       'https://dhrms-w47g.vercel.app',
       'http://localhost:5173',
+      'http://127.0.0.1:5173',
       'http://localhost:3000',
+      'http://127.0.0.1:3000',
     ].filter(Boolean);
     
     if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
