@@ -2,6 +2,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { attendanceService } from './attendance.service';
 import { createAuditLog } from '../../utils';
+import { AppError } from '../../middleware';
 
 export class AttendanceController {
   async checkIn(req: Request, res: Response, next: NextFunction) {
