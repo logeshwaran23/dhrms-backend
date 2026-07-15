@@ -3,11 +3,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.attendanceController = exports.AttendanceController = void 0;
 const attendance_service_1 = require("./attendance.service");
 const utils_1 = require("../../utils");
+const middleware_1 = require("../../middleware");
 class AttendanceController {
     async checkIn(req, res, next) {
         try {
             if (!req.user?.employeeId)
-                throw new AppError('Only employees can check in', 403);
+                throw new middleware_1.AppError('Only employees can check in', 403);
             const result = await attendance_service_1.attendanceService.checkIn(req.user.employeeId);
             await (0, utils_1.createAuditLog)({ userId: req.user.userId, action: 'CHECK_IN', resource: 'attendance', ip: req.ip });
             res.json({ success: true, data: result, message: 'Checked in successfully' });
@@ -19,7 +20,7 @@ class AttendanceController {
     async checkOut(req, res, next) {
         try {
             if (!req.user?.employeeId)
-                throw new AppError('Only employees can check out', 403);
+                throw new middleware_1.AppError('Only employees can check out', 403);
             const result = await attendance_service_1.attendanceService.checkOut(req.user.employeeId);
             await (0, utils_1.createAuditLog)({ userId: req.user.userId, action: 'CHECK_OUT', resource: 'attendance', ip: req.ip });
             res.json({ success: true, data: result, message: 'Checked out successfully' });
@@ -75,7 +76,7 @@ class AttendanceController {
     async regularize(req, res, next) {
         try {
             if (!req.user?.employeeId)
-                throw new AppError('Only employees can regularize attendance', 403);
+                throw new middleware_1.AppError('Only employees can regularize attendance', 403);
             const { attendanceId, reason, checkIn, checkOut } = req.body;
             const result = await attendance_service_1.attendanceService.requestRegularization(req.user.employeeId, attendanceId, reason, checkIn, checkOut);
             await (0, utils_1.createAuditLog)({ userId: req.user.userId, action: 'REGULARIZE', resource: 'attendance', resourceId: attendanceId, ip: req.ip });

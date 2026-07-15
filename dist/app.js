@@ -40,6 +40,7 @@ app.use((0, cors_1.default)({
         const allowedOrigins = [
             config_1.env.CLIENT_URL,
             'https://dhrms-w47g.vercel.app',
+            'https://dhrms-rs9e.vercel.app',
             'http://localhost:5173',
             'http://127.0.0.1:5173',
             'http://localhost:3000',
