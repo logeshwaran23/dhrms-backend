@@ -6,7 +6,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc || true",
     "start": "node dist/server.js",
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate && prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
     "db:reset": "prisma migrate reset",

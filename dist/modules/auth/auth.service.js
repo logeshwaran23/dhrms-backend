@@ -43,14 +43,29 @@ class AuthService {
             throw new middleware_1.AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
         }
         if (user.status === 'LOCKED') {
-            throw new middleware_1.AppError('Account is locked. Contact HR administrator.', 403, 'ACCOUNT_LOCKED');
+            throw new middleware_1.AppError('Account is locked due to too many failed login attempts. Contact HR administrator.', 403, 'ACCOUNT_LOCKED');
         }
         if (user.status === 'INACTIVE') {
             throw new middleware_1.AppError('Account is inactive', 403, 'ACCOUNT_INACTIVE');
         }
         const isPasswordValid = await (0, utils_1.comparePassword)(password, user.passwordHash);
         if (!isPasswordValid) {
-            throw new middleware_1.AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
+            // Track failed login attempts — lock after 5 failures
+            const currentAttempts = (user.loginAttempts || 0) + 1;
+            const MAX_ATTEMPTS = 5;
+            if (currentAttempts >= MAX_ATTEMPTS) {
+                await config_1.prisma.user.update({
+                    where: { id: user.id },
+                    data: { status: 'LOCKED', loginAttempts: currentAttempts },
+                });
+                throw new middleware_1.AppError('Account has been locked due to too many failed login attempts. Contact HR administrator.', 403, 'ACCOUNT_LOCKED');
+            }
+            await config_1.prisma.user.update({
+                where: { id: user.id },
+                data: { loginAttempts: currentAttempts },
+            });
+            const remaining = MAX_ATTEMPTS - currentAttempts;
+            throw new middleware_1.AppError(`Invalid email or password. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining before account lockout.`, 401, 'INVALID_CREDENTIALS');
         }
         // Build permissions array
         const permissions = user.role.rolePermissions.map((rp) => {
@@ -66,11 +81,11 @@ class AuthService {
         };
         const accessToken = (0, utils_1.signAccessToken)(tokenPayload);
         const refreshToken = (0, utils_1.signRefreshToken)({ userId: user.id });
-        // Store hashed refresh token
+        // Store hashed refresh token and reset failed login counter
         const refreshTokenHash = await bcryptjs_1.default.hash(refreshToken, 10);
         await config_1.prisma.user.update({
             where: { id: user.id },
-            data: { refreshToken: refreshTokenHash, lastLogin: new Date() },
+            data: { refreshToken: refreshTokenHash, lastLogin: new Date(), loginAttempts: 0 },
         });
         return {
             accessToken,
