@@ -64,8 +64,23 @@ app.use(express.urlencoded({ extended: true }));
 // ─── Rate Limiting ───────────────────────────────────────────
 app.use('/api', apiLimiter);
 
-// ─── Static Files ────────────────────────────────────────────
-app.use('/uploads', express.static(path.resolve(env.UPLOAD_DIR || './uploads')));
+// ─── Static Files (authenticated) ────────────────────────────
+// Protect uploaded files (ID proofs, documents) — require valid JWT
+app.use('/uploads', (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, message: 'Authentication required to access files' });
+  }
+  try {
+    const token = authHeader.split(' ')[1];
+    // Import verifyAccessToken from utils
+    const { verifyAccessToken } = require('./utils');
+    verifyAccessToken(token);
+    next();
+  } catch {
+    return res.status(401).json({ success: false, message: 'Invalid or expired token' });
+  }
+}, express.static(path.resolve(env.UPLOAD_DIR || './uploads')));
 
 // ─── Health Check ────────────────────────────────────────────
 app.get('/api/health', (_req, res) => {

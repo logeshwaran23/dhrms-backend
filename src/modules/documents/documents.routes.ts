@@ -110,4 +110,28 @@ router.get('/:id/download', authenticate, async (req: Request, res: Response, ne
   } catch (error) { next(error); }
 });
 
+// Delete document
+router.delete('/:id', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const doc = await prisma.document.findUnique({ where: { id: req.params.id } });
+    if (!doc) throw new AppError('Document not found', 404);
+
+    // Check ownership or HR access
+    const userPerms = req.user!.permissions || [];
+    if (doc.employeeId !== req.user!.employeeId && !userPerms.includes('document:delete:all')) {
+      throw new AppError('Access denied', 403);
+    }
+
+    await prisma.document.delete({ where: { id: req.params.id } });
+
+    // Remove file from filesystem
+    if (fs.existsSync(doc.filePath)) {
+      fs.unlinkSync(doc.filePath);
+    }
+
+    await createAuditLog({ userId: req.user!.userId, action: 'DELETE', resource: 'document', resourceId: doc.id, ip: req.ip });
+    res.json({ success: true, message: 'Document deleted successfully' });
+  } catch (error) { next(error); }
+});
+
 export default router;

@@ -40,7 +40,7 @@ export class AuthService {
     }
 
     if (user.status === 'LOCKED') {
-      throw new AppError('Account is locked. Contact HR administrator.', 403, 'ACCOUNT_LOCKED');
+      throw new AppError('Account is locked due to too many failed login attempts. Contact HR administrator.', 403, 'ACCOUNT_LOCKED');
     }
 
     if (user.status === 'INACTIVE') {
@@ -49,7 +49,33 @@ export class AuthService {
 
     const isPasswordValid = await comparePassword(password, user.passwordHash);
     if (!isPasswordValid) {
-      throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
+      // Track failed login attempts — lock after 5 failures
+      const currentAttempts = ((user as any).loginAttempts || 0) + 1;
+      const MAX_ATTEMPTS = 5;
+
+      if (currentAttempts >= MAX_ATTEMPTS) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { status: 'LOCKED', loginAttempts: currentAttempts },
+        });
+        throw new AppError(
+          'Account has been locked due to too many failed login attempts. Contact HR administrator.',
+          403,
+          'ACCOUNT_LOCKED'
+        );
+      }
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { loginAttempts: currentAttempts },
+      });
+
+      const remaining = MAX_ATTEMPTS - currentAttempts;
+      throw new AppError(
+        `Invalid email or password. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining before account lockout.`,
+        401,
+        'INVALID_CREDENTIALS'
+      );
     }
 
     // Build permissions array
@@ -69,11 +95,11 @@ export class AuthService {
     const accessToken = signAccessToken(tokenPayload);
     const refreshToken = signRefreshToken({ userId: user.id });
 
-    // Store hashed refresh token
+    // Store hashed refresh token and reset failed login counter
     const refreshTokenHash = await bcrypt.hash(refreshToken, 10);
     await prisma.user.update({
       where: { id: user.id },
-      data: { refreshToken: refreshTokenHash, lastLogin: new Date() },
+      data: { refreshToken: refreshTokenHash, lastLogin: new Date(), loginAttempts: 0 },
     });
 
     return {
